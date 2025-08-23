@@ -73,12 +73,12 @@
         placeholder="What would you like to find today?"
         bind:value={query}
         disabled={loading}
-        class="flex-grow"
+        class="flex-grow text-md border-1 border-blue-500"
       />
       <button
         on:click={doSearch}
         disabled={loading}
-        class="bg-indigo-600 rounded-lg"
+        class="bg-gray-900 rounded-lg"
       >
         <Button class="!p-2">
           {#if loading}
@@ -103,12 +103,12 @@
               <Card
                 class="max-w-full flex flex-row items-center w-full h-15 p-3 gap-3"
               >
-                <GiftBoxSolid
+                <FileOutline
                   class="h-6 w-6 text-gray-500 dark:text-gray-400"
                 />
                 <a href="/">
                   <h5
-                    class="text-xl font-semibold tracking-tight text-gray-900 dark:text-white"
+                    class="text-md tracking-tight text-gray-900 dark:text-white"
                   >
                     {result}
                   </h5>
