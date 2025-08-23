@@ -31,7 +31,7 @@ async fn search(query: String) -> Vec<String> {
                 if let Ok(hits) = serde_json::from_str::<Vec<Hit>>(&text) {
                     return hits.into_iter().map(|h| h.file_id).collect();
                 }
-                // try fmt2: ["id1", "id2", ...]
+                // Try fmt2: ["id1", "id2", ...]
                 if let Ok(strings) = serde_json::from_str::<Vec<String>>(&text) {
                     return strings;
                 }

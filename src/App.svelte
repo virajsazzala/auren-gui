@@ -1,22 +1,36 @@
 <script lang="ts">
-  import { invoke } from '@tauri-apps/api/core';
-  import { Input } from "flowbite-svelte";
-  import { FileOutline } from 'flowbite-svelte-icons';
+  import { invoke } from "@tauri-apps/api/core";
+  import {
+    Input,
+    Label,
+    Button,
+    InputAddon,
+    ButtonGroup,
+  } from "flowbite-svelte";
+  import { Card } from "flowbite-svelte";
+  import {
+    GiftBoxSolid,
+    ArrowUpRightFromSquareOutline,
+  } from "flowbite-svelte-icons";
+  import { FileOutline, SearchOutline } from "flowbite-svelte-icons";
 
-  let query = '';
+  let query = "";
   let results: string[] = [];
   let loading = false;
   let error: string | null = null;
   let searched = false;
-  let lastQuery = '';
+  let preview = false;
+  let currentPreview = "";
 
-  // clear results if query is empty
-  $: if (query.trim() === '') {
+  $: if (query.trim() === "") {
     results = [];
     searched = false;
-    lastQuery = '';
     error = null;
     loading = false;
+  }
+
+  async function doTest() {
+    console.log("Pressed");
   }
 
   async function doSearch() {
@@ -24,14 +38,13 @@
     if (!q) return;
 
     searched = true;
-    lastQuery = q;
     loading = true;
     error = null;
 
     try {
-      results = await invoke<string[]>('search', { query: q });
+      results = await invoke<string[]>("search", { query: q });
     } catch (e) {
-      error = 'Something went wrong. Please try again.';
+      error = "Something went wrong. Please try again.";
       console.error(e);
       results = [];
     } finally {
@@ -39,66 +52,101 @@
     }
   }
 
+  async function loadPreview(result: string) {
+    currentPreview = result;
+    preview = true;
+  }
+
+  async function clearPreview() {
+    currentPreview = "";
+    preview = false;
+  }
 </script>
-<div class="min-h-screen flex flex-col bg-gray-50">
-  <main class="flex-1 flex flex-col items-center justify-start py-12 px-6 font-sans">
-    <h1 class="text-2xl md:text-3xl font-semibold mb-6 text-slate-800 tracking-tight">Auren Search</h1>
 
-    <!-- search -->
-    <div class="w-full max-w-3xl mx-auto">
-      <div class="flex items-center gap-3">
-        <Input
-          id="large-input"
-          size="lg"
-          placeholder="Type your query..."
-          bind:value={query}
-          disabled={loading}
-          class="flex-grow"
-        />
-        <button
-          on:click={doSearch}
-          disabled={loading}
-          class="bg-indigo-600 text-white px-6 py-3 text-lg font-semibold rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all"
-        >
-          {loading ? '...' : 'Go'}
-        </button>
-      </div>
+<main class="min-h-screen px-16 pt-20">
+  <div class="flex flex-col space-y-4 w-full max-w-3xl mx-auto">
+    <h1 class="text-2xl md:text-3xl font-semibold text-center">Auren</h1>
+    <div class="flex flex-row gap-4 w-full">
+      <Input
+        id="large-input"
+        size="md"
+        placeholder="What would you like to find today?"
+        bind:value={query}
+        disabled={loading}
+        class="flex-grow"
+      />
+      <button
+        on:click={doSearch}
+        disabled={loading}
+        class="bg-indigo-600 rounded-lg"
+      >
+        <Button class="!p-2">
+          {#if loading}
+            <SearchOutline class="h-6 w-6" />
+          {:else}
+            <SearchOutline class="h-6 w-6" />
+          {/if}
+        </Button>
+      </button>
     </div>
 
-    {#if error}
-      <p class="mt-6 text-red-600 text-lg">{error}</p>
-    {/if}
+    <div class="flex flex-row items-start gap-4">
+      {#if results.length > 0}
+        <!-- {:else if results.length > 0} -->
+        <div class="w-1/2 space-y-3">
+          {#each results as result}
+            <div
+              role="region"
+              on:mouseenter={() => loadPreview(result)}
+              on:mouseleave={clearPreview}
+            >
+              <Card
+                class="max-w-full flex flex-row items-center w-full h-15 p-3 gap-3"
+              >
+                <GiftBoxSolid
+                  class="h-6 w-6 text-gray-500 dark:text-gray-400"
+                />
+                <a href="/">
+                  <h5
+                    class="text-xl font-semibold tracking-tight text-gray-900 dark:text-white"
+                  >
+                    {result}
+                  </h5>
+                </a>
+              </Card>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="w-1/2">
+          <p class="text-gray-500"></p>
+        </div>
+      {/if}
 
-    <!-- results -->
-    <div class="w-full max-w-3xl mt-8">
-      <div class="w-full">
-
-        {#if loading}
-          <div class="p-6 bg-white rounded-2xl shadow flex items-center justify-center">
-            <svg class="w-5 h-5 animate-spin text-indigo-600" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-            <span class="ml-3 text-gray-600">{#if lastQuery}Searching for "{lastQuery}"…{:else}Searching…{/if}</span>
-          </div>
-        {:else if results.length > 0}
-          <div class="space-y-4">
-            {#each results as result}
-              <article class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition p-4 flex gap-4 items-start dark:bg-slate-800 dark:border-slate-700">
-                <div class="flex-none w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <FileOutline class="w-5 h-5 text-indigo-600" aria-hidden="true" />
-                </div>
-                <div class="min-w-0">
-                  <p class="text-slate-700 dark:text-slate-200 text-lg break-words">{result}</p>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">metadata goes here.</p>
-                </div>
-              </article>
-            {/each}
-          </div>
+      <div class="w-1/2 p-6 {preview ? 'border' : ''}">
+        {#if preview}
+          {currentPreview}: Lorem ipsum dolor sit amet, consectetur adipiscing
+          elit. Nam in tortor at dui blandit tempor. Nunc blandit nisi at
+          tincidunt tristique. Mauris fermentum aliquam sem et sodales. Sed
+          vitae dui nec lorem rutrum malesuada non vitae diam. Duis euismod
+          feugiat facilisis. Nulla eu purus id justo tempus mollis sit amet et
+          risus. Mauris vitae ex in enim placerat ullamcorper. Nunc eros quam,
+          pellentesque eu euismod ut, dictum sit amet nulla. Aenean convallis
+          eros quis leo aliquam mattis. Aenean ac commodo tellus. Donec dui
+          sapien, dictum in bibendum eu, molestie vitae augue. Nullam a lectus
+          maximus elit luctus blandit ut id risus. Morbi dui ex, cursus nec
+          ultricies id, faucibus sed ligula. Praesent porta est tortor, vel
+          ultricies nisl dictum eu. Cras feugiat consectetur aliquam. Duis
+          volutpat nunc at felis pellentesque, euismod tincidunt lorem
+          malesuada. Mauris ac porta dui, id porttitor nulla. Praesent vitae
+          risus posuere elit malesuada cursus sit amet vel felis. Vestibulum
+          feugiat at ipsum et sagittis. Duis sit amet vulputate turpis. In
+          vehicula, lacus nec tristique convallis, elit purus pretium purus, non
+          ornare turpis metus ut est. Aliquam erat volutpat. Ut quis porta
+          lectus. Phasellus nec sodales elit, sed porttitor nunc. Maecenas eget
+          diam eros. Vestibulum ac nisl nec purus accumsan tempus.
         {/if}
-
       </div>
     </div>
-  </main>
-
-  <footer class="w-full">
-    <div class="max-w-3xl mx-auto py-4 text-center text-sm text-slate-400">Made with ❤ Auren</div>
-  </footer>
-</div>
+  </div>
+</main>
